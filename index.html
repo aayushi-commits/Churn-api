@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Churn Predictor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: #f5f5f2;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 28px; }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .header p  { font-size: 13px; color: #888; margin-top: 3px; }
+
+  /* Sample loader */
+  .sample-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid #e4e4e0; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px;
+  }
+  .sample-bar label { font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; }
+  .sample-bar select {
+    flex: 1; font-family: inherit; font-size: 13px; padding: 6px 10px;
+    border: 1px solid #ddd; border-radius: 6px; background: #fafaf8;
+    color: #1a1a1a; cursor: pointer;
+  }
+  .sample-bar select:focus { outline: 2px solid #6c63ff33; border-color: #6c63ff; }
+
+  /* Form card */
+  .card {
+    background: #fff; border: 1px solid #e4e4e0;
+    border-radius: 12px; padding: 20px 22px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: #999; margin-bottom: 14px;
+  }
+
+  /* Field grid */
+  .grid { display: grid; gap: 12px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; font-weight: 600; color: #777; }
+  .field select, .field input {
+    font-family: inherit; font-size: 13px;
+    padding: 7px 10px; border: 1px solid #ddd; border-radius: 7px;
+    background: #fafaf8; color: #1a1a1a; width: 100%;
+    transition: border-color 0.15s;
+  }
+  .field select:focus, .field input:focus {
+    outline: 2px solid #6c63ff33; border-color: #6c63ff;
+  }
+
+  /* Submit */
+  .btn-row { display: flex; justify-content: center; margin: 8px 0 24px; }
+  .btn-predict {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 12px 48px; border: none; border-radius: 999px;
+    background: #1a1a1a; color: #fff; cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-predict:hover  { background: #333; }
+  .btn-predict:active { transform: scale(0.97); }
+  .btn-predict:disabled { background: #aaa; cursor: not-allowed; }
+
+  /* Result */
+  #result { display: none; }
+  .result-card {
+    border-radius: 14px; padding: 22px 24px; margin-bottom: 24px;
+    border: 1px solid transparent;
+  }
+  .result-card.high   { background: #fff2f2; border-color: #fca5a5; }
+  .result-card.medium { background: #fffbeb; border-color: #fcd34d; }
+  .result-card.low    { background: #f0fdf4; border-color: #86efac; }
+
+  .result-top { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+  .prob-big { font-size: 52px; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; }
+  .result-card.high   .prob-big { color: #dc2626; }
+  .result-card.medium .prob-big { color: #d97706; }
+  .result-card.low    .prob-big { color: #16a34a; }
+
+  .risk-badge {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; padding: 4px 12px; border-radius: 999px;
+  }
+  .result-card.high   .risk-badge { background: #fca5a5; color: #7f1d1d; }
+  .result-card.medium .risk-badge { background: #fcd34d; color: #78350f; }
+  .result-card.low    .risk-badge { background: #86efac; color: #14532d; }
+
+  .reasons-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: #999; margin-bottom: 10px;
+  }
+  .reasons { display: flex; flex-direction: column; gap: 7px; }
+  .reason-row {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.6); border-radius: 8px; padding: 9px 12px;
+  }
+  .reason-dir {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+  .dir-up   { background: #fee2e2; color: #b91c1c; }
+  .dir-down { background: #dcfce7; color: #15803d; }
+  .reason-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .reason-val  { font-size: 12px; font-family: 'DM Mono', monospace; color: #888; }
+
+  /* Error */
+  .error-box {
+    background: #fff2f2; border: 1px solid #fca5a5; border-radius: 10px;
+    padding: 14px 16px; font-size: 13px; color: #b91c1c; margin-bottom: 20px;
+  }
+
+  /* Loader spinner */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px; margin-right: 8px;
+    border: 2px solid #fff4; border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 540px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .prob-big { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Churn Predictor</h1>
+    <p>Fill in customer details and press Predict to see the churn probability and top reasons.</p>
+  </div>
+
+  <!-- Sample loader -->
+  <div class="sample-bar">
+    <label>Load sample customer:</label>
+    <select id="samplePicker" onchange="loadSample(this.value)">
+      <option value="">— select an example —</option>
+      <option value="high1">High risk · Month-to-month · 1 month tenure</option>
+      <option value="high2">High risk · Fiber optic · No security · Electronic check</option>
+      <option value="med1">Medium risk · One year contract · 18 months tenure</option>
+      <option value="low1">Low risk · Two year contract · Senior · 72 months tenure</option>
+    </select>
+  </div>
+
+  <!-- Result (shown after prediction) -->
+  <div id="result"></div>
+
+  <!-- Form -->
+  <form id="form" onsubmit="predict(event)">
+
+    <!-- Personal -->
+    <div class="card">
+      <div class="card-title">Personal Info</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <label>Gender</label>
+          <select name="gender">
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Senior Citizen</label>
+          <select name="SeniorCitizen">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Partner</label>
+          <select name="Partner">
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Dependents</label>
+          <select name="Dependents">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tenure (months)</label>
+          <input type="number" name="tenure" value="1" min="0" max="120">
+        </div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="card">
+      <div class="card-title">Services</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <label>Phone Service</label>
+          <select name="PhoneService">
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Multiple Lines</label>
+          <select name="MultipleLines">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No phone service">No phone service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Internet Service</label>
+          <select name="InternetService">
+            <option>DSL</option>
+            <option>Fiber optic</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Online Security</label>
+          <select name="OnlineSecurity">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Online Backup</label>
+          <select name="OnlineBackup">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Device Protection</label>
+          <select name="DeviceProtection">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tech Support</label>
+          <select name="TechSupport">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Streaming TV</label>
+          <select name="StreamingTV">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Streaming Movies</label>
+          <select name="StreamingMovies">
+            <option>No</option>
+            <option>Yes</option>
+            <option value="No internet service">No internet service</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account & Billing -->
+    <div class="card">
+      <div class="card-title">Account &amp; Billing</div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Contract</label>
+          <select name="Contract">
+            <option>Month-to-month</option>
+            <option>One year</option>
+            <option>Two year</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Paperless Billing</label>
+          <select name="PaperlessBilling">
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Payment Method</label>
+          <select name="PaymentMethod">
+            <option>Electronic check</option>
+            <option>Mailed check</option>
+            <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+            <option value="Credit card (automatic)">Credit card (automatic)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Monthly Charges ($)</label>
+          <input type="number" name="MonthlyCharges" value="29.85" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Total Charges ($)</label>
+          <input type="number" name="TotalCharges" value="29.85" min="0" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn-predict" id="btn">Predict Churn</button>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+// ── Sample data ───────────────────────────────────────────────────────────────
+const SAMPLES = {
+  high1: {
+    gender: "Female", SeniorCitizen: "0", Partner: "Yes", Dependents: "No",
+    tenure: 1, PhoneService: "No", MultipleLines: "No phone service",
+    InternetService: "DSL", OnlineSecurity: "No", OnlineBackup: "Yes",
+    DeviceProtection: "No", TechSupport: "No", StreamingTV: "No",
+    StreamingMovies: "No", Contract: "Month-to-month", PaperlessBilling: "Yes",
+    PaymentMethod: "Electronic check", MonthlyCharges: 29.85, TotalCharges: 29.85
+  },
+  high2: {
+    gender: "Male", SeniorCitizen: "0", Partner: "No", Dependents: "No",
+    tenure: 2, PhoneService: "Yes", MultipleLines: "No",
+    InternetService: "Fiber optic", OnlineSecurity: "No", OnlineBackup: "No",
+    DeviceProtection: "No", TechSupport: "No", StreamingTV: "Yes",
+    StreamingMovies: "Yes", Contract: "Month-to-month", PaperlessBilling: "Yes",
+    PaymentMethod: "Electronic check", MonthlyCharges: 85.45, TotalCharges: 170.90
+  },
+  med1: {
+    gender: "Male", SeniorCitizen: "0", Partner: "Yes", Dependents: "No",
+    tenure: 18, PhoneService: "Yes", MultipleLines: "Yes",
+    InternetService: "DSL", OnlineSecurity: "Yes", OnlineBackup: "No",
+    DeviceProtection: "No", TechSupport: "No", StreamingTV: "No",
+    StreamingMovies: "No", Contract: "One year", PaperlessBilling: "No",
+    PaymentMethod: "Mailed check", MonthlyCharges: 54.75, TotalCharges: 985.50
+  },
+  low1: {
+    gender: "Female", SeniorCitizen: "1", Partner: "Yes", Dependents: "Yes",
+    tenure: 72, PhoneService: "Yes", MultipleLines: "No",
+    InternetService: "DSL", OnlineSecurity: "Yes", OnlineBackup: "Yes",
+    DeviceProtection: "Yes", TechSupport: "Yes", StreamingTV: "No",
+    StreamingMovies: "No", Contract: "Two year", PaperlessBilling: "No",
+    PaymentMethod: "Bank transfer (automatic)", MonthlyCharges: 65.10, TotalCharges: 4687.20
+  }
+};
+
+function loadSample(key) {
+  if (!key) return;
+  const s = SAMPLES[key];
+  const form = document.getElementById('form');
+  for (const [field, val] of Object.entries(s)) {
+    const el = form.elements[field];
+    if (el) el.value = String(val);
+  }
+}
+
+// ── Feature name cleanup ──────────────────────────────────────────────────────
+function cleanFeature(name) {
+  // "Contract_Month-to-month" → "Contract: Month-to-month"
+  // "MonthlyCharges" → "Monthly Charges"
+  const map = {
+    tenure: "Tenure",
+    MonthlyCharges: "Monthly Charges",
+    TotalCharges: "Total Charges",
+    SeniorCitizen: "Senior Citizen",
+  };
+  // Handle one-hot encoded names like "Contract_Month-to-month"
+  const underIdx = name.indexOf("_");
+  if (underIdx !== -1) {
+    const field = name.slice(0, underIdx);
+    const val   = name.slice(underIdx + 1);
+    const cleanField = map[field] || field.replace(/([A-Z])/g, ' $1').trim();
+    return `${cleanField}: ${val}`;
+  }
+  return map[name] || name.replace(/([A-Z])/g, ' $1').trim();
+}
+
+// ── Predict ───────────────────────────────────────────────────────────────────
+async function predict(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const resultDiv = document.getElementById('result');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Predicting…';
+  resultDiv.style.display = 'none';
+
+  const form = document.getElementById('form');
+  const data = {};
+  for (const el of form.elements) {
+    if (!el.name) continue;
+    const raw = el.value;
+    // Numeric fields
+    if (['tenure','MonthlyCharges','TotalCharges','SeniorCitizen'].includes(el.name)) {
+      data[el.name] = Number(raw);
+    } else {
+      data[el.name] = raw;
+    }
+  }
+
+  try {
+    const resp = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || `Server error ${resp.status}`);
+    }
+
+    const r = await resp.json();
+    renderResult(r);
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
+    resultDiv.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Predict Churn';
+  }
+}
+
+function renderResult(r) {
+  const tier = r.risk_tier; // low / medium / high
+  const pct  = r.churn_percent;
+
+  const reasonsHtml = r.top_reasons.map(reason => {
+    const isUp = reason.contribution > 0;
+    const dirLabel = isUp ? '▲ increases risk' : '▼ decreases risk';
+    const dirClass = isUp ? 'dir-up' : 'dir-down';
+    const val = (reason.contribution > 0 ? '+' : '') + reason.contribution.toFixed(3);
+    return `
+      <div class="reason-row">
+        <span class="reason-dir ${dirClass}">${dirLabel}</span>
+        <span class="reason-name">${cleanFeature(reason.feature)}</span>
+        <span class="reason-val">${val}</span>
+      </div>`;
+  }).join('');
+
+  const html = `
+    <div class="result-card ${tier}">
+      <div class="result-top">
+        <div class="prob-big">${pct}</div>
+        <span class="risk-badge">${tier} risk</span>
+      </div>
+      <div class="reasons-label">Top 3 reasons</div>
+      <div class="reasons">${reasonsHtml}</div>
+    </div>`;
+
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = html;
+  resultDiv.style.display = 'block';
+  resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

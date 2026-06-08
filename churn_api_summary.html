@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Churn Prediction API — Project Summary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1a1a1a; background: #fafaf8; padding: 40px; max-width: 860px; margin: 0 auto; }
+
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.02em; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 28px; }
+  h2 { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #999; margin-bottom: 10px; margin-top: 28px; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px; }
+  .tag-ml  { background: #e8f5e9; color: #2e7d32; }
+  .tag-api { background: #e3f2fd; color: #1565c0; }
+  .tag-mlops { background: #ede7f6; color: #4527a0; }
+  .tag-lr  { background: #fff8e1; color: #f57f17; }
+
+  /* change badge */
+  .change-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #fff3cd; color: #856404; border: 1px solid #ffc107; vertical-align: middle; margin-left: 6px; }
+  .removed-badge { background: #fde8e8; color: #b91c1c; border-color: #f87171; }
+  .added-badge { background: #dcfce7; color: #15803d; border-color: #4ade80; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+
+  .card { border: 1px solid #e4e4e0; border-radius: 10px; padding: 14px 16px; background: #fff; }
+  .card-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .card-body { font-size: 12px; color: #555; line-height: 1.6; }
+
+  .stat-card { border: 1px solid #e4e4e0; border-radius: 10px; padding: 12px 14px; text-align: center; background: #fff; }
+  .stat-val { font-size: 22px; font-weight: 700; color: #1a1a1a; font-family: 'DM Mono', monospace; }
+  .stat-lbl { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .feature-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .feat-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border: 1px solid #e4e4e0; border-radius: 8px; background: #fff; }
+  .feat-row.changed { border-color: #fbbf24; background: #fffdf0; }
+  .feat-row.removed { border-color: #f87171; background: #fff8f8; opacity: 0.6; }
+  .feat-num { font-size: 11px; font-weight: 600; min-width: 20px; color: #999; padding-top: 1px; font-family: 'DM Mono', monospace; }
+  .feat-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+  .feat-desc { font-size: 12px; color: #555; line-height: 1.5; }
+
+  .req-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .req-card { border: 1px solid #e4e4e0; border-radius: 8px; padding: 10px 12px; background: #fff; }
+  .req-card.changed { border-color: #fbbf24; background: #fffdf0; }
+  .req-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .req-item { font-size: 11px; color: #555; padding: 2px 0; font-family: 'DM Mono', monospace; }
+  .req-item.removed { text-decoration: line-through; color: #f87171; }
+  .req-item.added { color: #15803d; font-weight: 500; }
+
+  .data-card { border: 1px solid #e4e4e0; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; background: #fff; }
+  .data-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .ds { background: #f7f7f5; border-radius: 6px; padding: 8px 10px; text-align: center; }
+  .ds-val { font-size: 16px; font-weight: 700; color: #1a1a1a; font-family: 'DM Mono', monospace; }
+  .ds-lbl { font-size: 10px; color: #888; margin-top: 1px; }
+  .feat-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 5px; background: #f0f0ee; color: #444; font-family: 'DM Mono', monospace; }
+
+  .endpoint-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .ep-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #e4e4e0; border-radius: 7px; background: #fff; }
+  .method { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; min-width: 46px; text-align: center; font-family: 'DM Mono', monospace; }
+  .m-post { background: #fff3e0; color: #e65100; }
+  .m-get  { background: #e8f5e9; color: #2e7d32; }
+  .ep-path { font-size: 12px; font-family: 'DM Mono', monospace; color: #1a1a1a; font-weight: 500; min-width: 160px; }
+  .ep-desc { font-size: 12px; color: #666; }
+
+  /* changes summary box */
+  .changes-box { border: 1px solid #fbbf24; border-radius: 10px; background: #fffdf0; padding: 16px 18px; margin-bottom: 20px; }
+  .changes-box-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #92400e; margin-bottom: 12px; }
+  .change-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #fde68a; }
+  .change-row:last-child { border-bottom: none; }
+  .change-day { font-size: 11px; font-weight: 600; color: #92400e; min-width: 44px; font-family: 'DM Mono', monospace; padding-top: 1px; }
+  .change-text { font-size: 12px; color: #555; line-height: 1.5; }
+  .strike { text-decoration: line-through; color: #f87171; }
+  .green { color: #15803d; font-weight: 500; }
+
+  .timeline { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
+  .tday { border: 1px solid #e4e4e0; border-radius: 8px; padding: 10px; text-align: center; background: #fff; }
+  .tday.changed { border-color: #fbbf24; background: #fffdf0; }
+  .tday-num { font-size: 10px; font-weight: 600; color: #999; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .tday-title { font-size: 11px; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
+  .tday-time { font-size: 10px; color: #999; margin-top: 4px; }
+
+  .divider { height: 1px; background: #ebebea; margin: 20px 0; }
+  .footer { font-size: 11px; color: #bbb; text-align: center; margin-top: 28px; padding-top: 16px; border-top: 1px solid #ebebea; font-family: 'DM Mono', monospace; }
+
+  @media print { body { padding: 20px; background: white; } }
+  @media (max-width: 600px) { .grid-2,.grid-3,.grid-4,.req-grid,.data-stats,.timeline { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Churn Prediction API <span style="font-size:14px;font-weight:400;color:#888;">— updated</span></h1>
+<p class="subtitle">Production-ready ML API — predicts customer churn with coefficient-based explainability and MLflow tracking</p>
+
+<div class="tags">
+  <span class="tag tag-ml">Machine Learning</span>
+  <span class="tag tag-api">REST API</span>
+  <span class="tag tag-mlops">MLOps</span>
+  <span class="tag tag-lr">Logistic Regression</span>
+</div>
+
+<!-- Changes summary -->
+<h2>What changed — XGBoost → Logistic Regression</h2>
+<div class="changes-box">
+  <div class="changes-box-title">📋 Change log</div>
+
+  <div class="change-row">
+    <span class="change-day">Day 1</span>
+    <span class="change-text">Remove <span class="strike">xgboost</span> from install. Everything else stays the same.</span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 2</span>
+    <span class="change-text">
+      Use <span class="green">LogisticRegression(class_weight='balanced')</span> instead of <span class="strike">XGBClassifier + scale_pos_weight</span>.
+      <br>StandardScaler on numerical columns is now <span class="green">mandatory</span> — LR is scale-sensitive, XGBoost wasn't.
+      <br>Log extra param: <span class="green">model_type = "logistic_regression"</span> in MLflow.
+    </span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 3</span>
+    <span class="change-text">No changes. schemas.py and /predict endpoint stay exactly the same.</span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 4</span>
+    <span class="change-text">
+      <span class="strike">Delete explainer.py — no SHAP needed.</span>
+      <br>Explanation logic moves into <span class="green">main.py</span> as ~10 lines.
+      <br>Method changes: <span class="strike">shap.LinearExplainer</span> → <span class="green">coefficient × feature value</span> per customer.
+    </span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 5</span>
+    <span class="change-text">Remove <span class="strike">shap</span> from requirements.txt. Smaller image, faster build.</span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 6</span>
+    <span class="change-text">No changes. Railway deploy is identical.</span>
+  </div>
+  <div class="change-row">
+    <span class="change-day">Day 7</span>
+    <span class="change-text">Update resume line: <span class="green">Logistic Regression · scikit-learn Pipeline · MLflow · FastAPI · Docker · Railway</span></span>
+  </div>
+</div>
+
+<!-- What it does -->
+<h2>What it does</h2>
+<div class="grid-2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">The problem</div>
+    <div class="card-body">Companies lose 5–25% revenue annually to churn. Teams have no way to know which customers are at risk until they have already left. Models also silently degrade in production without anyone noticing.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">The solution</div>
+    <div class="card-body">A REST API any app can call to score a customer in real time. Returns a churn probability, risk tier (low/medium/high), and the top 3 reasons why — derived from model coefficients, so no extra library needed.</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="grid-4">
+  <div class="stat-card"><div class="stat-val">7 days</div><div class="stat-lbl">to build &amp; deploy</div></div>
+  <div class="stat-card"><div class="stat-val">&lt;1 hr</div><div class="stat-lbl">per day</div></div>
+  <div class="stat-card"><div class="stat-val">3 files</div><div class="stat-lbl">core codebase</div></div>
+  <div class="stat-card"><div class="stat-val">free</div><div class="stat-lbl">to host (Railway)</div></div>
+</div>
+
+<!-- Features -->
+<h2>Core features</h2>
+<div class="feature-list">
+  <div class="feat-row">
+    <span class="feat-num">01</span>
+    <div><div class="feat-title">Real-time churn scoring</div><div class="feat-desc">POST /predict — send customer data, get back a probability (0–100%), a risk tier, and the model version that scored it.</div></div>
+  </div>
+  <div class="feat-row changed">
+    <span class="feat-num">02</span>
+    <div>
+      <div class="feat-title">Coefficient-based explainability <span class="change-badge">updated</span></div>
+      <div class="feat-desc">Every prediction includes the top 3 features driving the score — e.g. "month-to-month contract (+0.31)" — computed directly from LR coefficients × feature values. No SHAP library needed.</div>
+    </div>
+  </div>
+  <div class="feat-row">
+    <span class="feat-num">03</span>
+    <div><div class="feat-title">MLflow experiment tracking</div><div class="feat-desc">Every training run logs hyperparameters, AUC, F1 to MLflow. Compare any two runs side by side in the MLflow UI.</div></div>
+  </div>
+  <div class="feat-row">
+    <span class="feat-num">04</span>
+    <div><div class="feat-title">MLflow Model Registry</div><div class="feat-desc">Models are versioned through Staging → Production. The API always loads from Production — no manual file copying needed.</div></div>
+  </div>
+  <div class="feat-row">
+    <span class="feat-num">05</span>
+    <div><div class="feat-title">On-demand retraining</div><div class="feat-desc">POST /retrain triggers a full retrain, compares new AUC vs the current champion in MLflow, and promotes only if it genuinely improves by &gt; 0.005.</div></div>
+  </div>
+  <div class="feat-row">
+    <span class="feat-num">06</span>
+    <div><div class="feat-title">Swagger UI + health check</div><div class="feat-desc">Auto-generated interactive docs at /docs. GET /health confirms model is loaded and ready. GET /model/info shows active version and metrics.</div></div>
+  </div>
+</div>
+
+<!-- Data -->
+<h2>Data source</h2>
+<div class="data-card">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:3px">IBM Telco Customer Churn Dataset</div>
+      <div style="font-size:12px;color:#666">Kaggle — download manually from kaggle.com/datasets/blastchar/telco-customer-churn</div>
+    </div>
+    <span style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;background:#e3f2fd;color:#1565c0;font-family:'DM Mono',monospace;">manual download recommended</span>
+  </div>
+  <div class="data-stats">
+    <div class="ds"><div class="ds-val">7,043</div><div class="ds-lbl">customers</div></div>
+    <div class="ds"><div class="ds-val">21</div><div class="ds-lbl">features</div></div>
+    <div class="ds"><div class="ds-val">26%</div><div class="ds-lbl">churn rate</div></div>
+    <div class="ds"><div class="ds-val">$0</div><div class="ds-lbl">cost</div></div>
+  </div>
+  <div style="font-size:12px;color:#666;margin-bottom:6px">Key features used by the model:</div>
+  <div class="feat-pills">
+    <span class="pill">tenure</span>
+    <span class="pill">MonthlyCharges</span>
+    <span class="pill">TotalCharges</span>
+    <span class="pill">Contract</span>
+    <span class="pill">InternetService</span>
+    <span class="pill">PaymentMethod</span>
+    <span class="pill">TechSupport</span>
+    <span class="pill">PaperlessBilling</span>
+    <span class="pill">SeniorCitizen</span>
+    <span class="pill">Dependents</span>
+    <span class="pill">Partner</span>
+    <span class="pill">gender</span>
+  </div>
+</div>
+
+<!-- API endpoints -->
+<h2>API endpoints</h2>
+<div class="endpoint-list">
+  <div class="ep-row"><span class="method m-post">POST</span><span class="ep-path">/predict</span><span class="ep-desc">Score a customer — returns probability, risk tier, top 3 coefficient-based reasons</span></div>
+  <div class="ep-row"><span class="method m-post">POST</span><span class="ep-path">/retrain</span><span class="ep-desc">Trigger retraining — compares vs champion, promotes if AUC improves &gt; 0.005</span></div>
+  <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/model/info</span><span class="ep-desc">Active model version, AUC, F1, training date from MLflow</span></div>
+  <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/model/runs</span><span class="ep-desc">Last N MLflow experiment runs with metrics</span></div>
+  <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/health</span><span class="ep-desc">Liveness check — model loaded, uptime, status</span></div>
+  <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/docs</span><span class="ep-desc">Auto-generated Swagger UI — test all endpoints in browser</span></div>
+</div>
+
+<!-- Tech stack -->
+<h2>Tech stack</h2>
+<div class="req-grid">
+  <div class="req-card changed">
+    <div class="req-label" style="color:#2e7d32">ML Model <span class="change-badge" style="font-size:9px;">updated</span></div>
+    <div class="req-item added">LogisticRegression</div>
+    <div class="req-item">scikit-learn</div>
+    <div class="req-item removed">shap</div>
+    <div class="req-item">pandas / numpy</div>
+    <div class="req-item removed">xgboost</div>
+  </div>
+  <div class="req-card">
+    <div class="req-label" style="color:#4527a0">MLflow</div>
+    <div class="req-item">mlflow &gt;= 2.12</div>
+    <div class="req-item">tracking server</div>
+    <div class="req-item">model registry</div>
+    <div class="req-item">sqlite backend</div>
+  </div>
+  <div class="req-card">
+    <div class="req-label" style="color:#e65100">API</div>
+    <div class="req-item">fastapi</div>
+    <div class="req-item">uvicorn</div>
+    <div class="req-item">pydantic v2</div>
+  </div>
+  <div class="req-card">
+    <div class="req-label" style="color:#1565c0">Deploy</div>
+    <div class="req-item">Docker</div>
+    <div class="req-item">Railway (free)</div>
+    <div class="req-item">GitHub</div>
+  </div>
+</div>
+
+<!-- Project files -->
+<h2>Project structure — 3 Python files <span class="change-badge">updated</span></h2>
+<div class="card" style="font-family: 'DM Mono', monospace; font-size:12px; line-height:2; margin-bottom:20px; color:#555;">
+  <span style="color:#1a1a1a;font-weight:600">churn-api/</span><br>
+  ├── <span style="color:#1565c0">train.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#aaa;font-size:11px">— load data, train LogisticRegression, log to MLflow, register model</span><br>
+  ├── <span style="color:#1565c0">main.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#aaa;font-size:11px">— FastAPI app, all endpoints, model loading, explanation logic</span><br>
+  ├── <span style="color:#1565c0">schemas.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#aaa;font-size:11px">— Pydantic input / output models (unchanged)</span><br>
+  ├── <span style="color:#f87171;text-decoration:line-through;">explainer.py</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#f87171;font-size:11px">— deleted · logic moved into main.py</span><br>
+  ├── Dockerfile<br>
+  ├── requirements.txt<br>
+  ├── .env.example<br>
+  └── README.md
+</div>
+
+<!-- 7-day plan -->
+<h2>7-day build plan · 1 hour per day</h2>
+<div class="timeline">
+  <div class="tday changed"><div class="tday-num">Day 1</div><div class="tday-title">Setup &amp; data</div><div class="tday-time">~45 min</div></div>
+  <div class="tday changed"><div class="tday-num">Day 2</div><div class="tday-title">Train LR + MLflow</div><div class="tday-time">~55 min</div></div>
+  <div class="tday"><div class="tday-num">Day 3</div><div class="tday-title">FastAPI /predict</div><div class="tday-time">~55 min</div></div>
+  <div class="tday changed"><div class="tday-num">Day 4</div><div class="tday-title">Coeff explainer + endpoints</div><div class="tday-time">~50 min</div></div>
+  <div class="tday changed"><div class="tday-num">Day 5</div><div class="tday-title">Dockerfile</div><div class="tday-time">~40 min</div></div>
+  <div class="tday"><div class="tday-num">Day 6</div><div class="tday-title">Deploy Railway</div><div class="tday-time">~40 min</div></div>
+  <div class="tday changed"><div class="tday-num">Day 7</div><div class="tday-title">README &amp; cleanup</div><div class="tday-time">~30 min</div></div>
+</div>
+<p style="font-size:11px;color:#aaa;margin-top:-12px;margin-bottom:20px;">Days with yellow border have changes from the original XGBoost plan.</p>
+
+<!-- Concepts covered -->
+<h2>Concepts this project covers — for your resume &amp; interviews</h2>
+<div class="grid-3">
+  <div class="card" style="border-color:#fbbf24;background:#fffdf0;">
+    <div class="card-title">Logistic Regression Pipeline <span class="change-badge">updated</span></div>
+    <div class="card-body">Binary classification, class_weight='balanced' for imbalance, StandardScaler mandatory inside Pipeline to prevent train/serve skew.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">MLflow tracking &amp; registry</div>
+    <div class="card-body">Logging params, metrics, and artifacts per run. Promoting models through Staging → Production via the Registry API.</div>
+  </div>
+  <div class="card" style="border-color:#fbbf24;background:#fffdf0;">
+    <div class="card-title">Coefficient explainability <span class="change-badge">updated</span></div>
+    <div class="card-body">LR coefficients × feature values per prediction. No SHAP needed — the model is inherently interpretable. Top 3 reasons surfaced per prediction.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">FastAPI serving</div>
+    <div class="card-body">Lifespan model loading, Pydantic v2 validation, async endpoints, background retraining tasks, Swagger auto-docs.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Champion / challenger</div>
+    <div class="card-body">Compare new model AUC vs Production in MLflow before promoting. Only promote if AUC improves by &gt; 0.005.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Docker + cloud deploy</div>
+    <div class="card-body">Single-stage Dockerfile, environment variable management, deploying a containerised ML API to Railway free tier.</div>
+  </div>
+</div>
+
+<div class="footer">Churn Prediction API · LogisticRegression · FastAPI · MLflow · Docker · Railway</div>
+
+</body>
+</html>
